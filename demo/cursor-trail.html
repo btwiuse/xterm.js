@@ -387,6 +387,7 @@
     });
 
     term.open(document.getElementById('terminal'));
+    term.focus();
 
     // Create a shell session first, then connect WebSocket to it
     const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
@@ -405,7 +406,16 @@
 
     // Resize terminal when window resizes
     window.addEventListener('resize', () => {
-      term.resize();
+      const dims = term.dimensions;
+      if (!dims || dims.css.cell.width <= 0 || dims.css.cell.height <= 0) {
+        return;
+      }
+      const el = document.getElementById('terminal')!;
+      const cols = Math.floor(el.clientWidth / dims.css.cell.width);
+      const rows = Math.floor(el.clientHeight / dims.css.cell.height);
+      if (cols > 0 && rows > 0) {
+        term.resize(cols, rows);
+      }
     });
 
     // Notify backend of terminal size changes (needed for PTY to resize)
