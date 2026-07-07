@@ -250,6 +250,7 @@ if (document.location.pathname === '/test') {
   controlBar.setTabVisible('addon-web-links', !!addons.webLinks.instance);
   controlBar.setTabVisible('addon-webgl', true);
   controlBar.setTabVisible('addon-cursor-trail', true);
+  addonCursorTrailWindow.setTrail(addons.cursorTrail.instance!);
   addonWebglWindow.setTextureAtlas(addons.webgl.instance!.textureAtlas!);
   addons.webgl.instance!.onChangeTextureAtlas(e => addonWebglWindow.setTextureAtlas(e));
   addons.webgl.instance!.onAddTextureAtlasCanvas(e => addonWebglWindow.appendTextureAtlas(e));
@@ -308,6 +309,7 @@ function createTerminal(): Terminal {
   addons.serialize.instance = new SerializeAddon();
   addons.fit.instance = new FitAddon();
   addons.cursorTrail.instance = new CursorTrailAddon();
+  term.loadAddon(addons.cursorTrail.instance);
   addons.image.instance = new ImageAddon!();
   addons.progress.instance = new ProgressAddon();
   addons.unicodeGraphemes.instance = new UnicodeGraphemesAddon();
@@ -528,6 +530,9 @@ function initAddons(term: Terminal): void {
             controlBar.setTabVisible('addon-progress', true);
           } else if (name === 'webLinks') {
             controlBar.setTabVisible('addon-web-links', true);
+          } else if (name === 'cursorTrail') {
+            controlBar.setTabVisible('addon-cursor-trail', true);
+            addonCursorTrailWindow.setTrail(addon.instance);
           }
         }
         catch {
@@ -550,6 +555,8 @@ function initAddons(term: Terminal): void {
           controlBar.setTabVisible('addon-progress', false);
         } else if (name === 'webLinks') {
           controlBar.setTabVisible('addon-web-links', false);
+        } else if (name === 'cursorTrail') {
+          controlBar.setTabVisible('addon-cursor-trail', false);
         }
         addon.instance!.dispose();
         addon.instance = undefined;
