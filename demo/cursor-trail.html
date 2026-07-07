@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CursorTrail Addon Demo</title>
+  <link rel="stylesheet" href="/xterm.css" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1e1e1e;
+      color: #e0e0e0;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .header {
+      background: #2d2d2d;
+      padding: 16px 24px;
+      border-bottom: 1px solid #404040;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .header h1 {
+      font-size: 20px;
+      font-weight: 600;
+      color: #f0f0f0;
+    }
+
+    .header .badge {
+      background: #0d7377;
+      color: #fff;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 24px;
+      padding: 24px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    @media (max-width: 900px) {
+      .container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .terminal-wrapper {
+      background: #000;
+      border-radius: 8px;
+      padding: 12px;
+      border: 1px solid #404040;
+      position: relative;
+    }
+
+    .terminal-wrapper .label {
+      position: absolute;
+      top: 8px;
+      left: 12px;
+      font-size: 11px;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    #terminal {
+      width: 100%;
+      height: 500px;
+      border-radius: 4px;
+    }
+
+    .panel {
+      background: #252526;
+      border-radius: 8px;
+      padding: 20px;
+      border: 1px solid #404040;
+    }
+
+    .panel h2 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #f0f0f0;
+      margin-bottom: 16px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .control-group {
+      margin-bottom: 16px;
+    }
+
+    .control-group label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      color: #ccc;
+      margin-bottom: 6px;
+    }
+
+    .control-group label span.value {
+      color: #0d7377;
+      font-weight: 500;
+      font-family: 'SF Mono', Monaco, monospace;
+    }
+
+    .control-group input[type="range"] {
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: #3e3e42;
+      outline: none;
+      -webkit-appearance: none;
+    }
+
+    .control-group input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #0d7377;
+      cursor: pointer;
+      border: 2px solid #1e1e1e;
+    }
+
+    .control-group input[type="range"]::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #0d7377;
+      cursor: pointer;
+      border: 2px solid #1e1e1e;
+    }
+
+    .control-group input[type="color"] {
+      width: 100%;
+      height: 32px;
+      border: 1px solid #404040;
+      border-radius: 4px;
+      background: #1e1e1e;
+      cursor: pointer;
+      padding: 2px;
+    }
+
+    .toggle-group {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .toggle-group label {
+      font-size: 13px;
+      color: #ccc;
+    }
+
+    .toggle {
+      position: relative;
+      width: 44px;
+      height: 24px;
+    }
+
+    .toggle input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #3e3e42;
+      transition: 0.3s;
+      border-radius: 24px;
+    }
+
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: 0.3s;
+      border-radius: 50%;
+    }
+
+    .toggle input:checked + .toggle-slider {
+      background-color: #0d7377;
+    }
+
+    .toggle input:checked + .toggle-slider:before {
+      transform: translateX(20px);
+    }
+
+    .code-block {
+      background: #1e1e1e;
+      border: 1px solid #404040;
+      border-radius: 6px;
+      padding: 12px;
+      font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+      font-size: 12px;
+      line-height: 1.5;
+      color: #d4d4d4;
+      overflow-x: auto;
+      margin-top: 12px;
+    }
+
+    .code-block .keyword {
+      color: #569cd6;
+    }
+
+    .code-block .string {
+      color: #ce9178;
+    }
+
+    .code-block .number {
+      color: #b5cea8;
+    }
+
+    .code-block .comment {
+      color: #6a9955;
+    }
+
+    .code-block .function {
+      color: #dcdcaa;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: #4ec9b0;
+      margin-top: 12px;
+    }
+
+    .status .dot {
+      width: 8px;
+      height: 8px;
+      background: #4ec9b0;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .info-box {
+      background: #0d737720;
+      border-left: 3px solid #0d7377;
+      padding: 10px 14px;
+      border-radius: 4px;
+      font-size: 12px;
+      color: #b0d4d4;
+      line-height: 1.5;
+      margin-top: 16px;
+    }
+
+    .info-box strong {
+      color: #0d7377;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🐾 CursorTrail Addon Demo</h1>
+    <span class="badge">kitty-style cursor trail for xterm.js</span>
+  </div>
+
+  <div class="container">
+    <div class="terminal-wrapper">
+      <span class="label">Terminal</span>
+      <div id="terminal"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Trail Settings</h2>
+
+      <div class="toggle-group">
+        <label>Enable Trail</label>
+        <label class="toggle">
+          <input type="checkbox" id="enabled" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <div class="control-group">
+        <label>Trail Color <span class="value" id="colorValue">#cccccc</span></label>
+        <input type="color" id="trailColor" value="#cccccc">
+      </div>
+
+      <div class="control-group">
+        <label>Trail Opacity <span class="value" id="opacityValue">0.5</span></label>
+        <input type="range" id="trailOpacity" min="0.05" max="1" step="0.05" value="0.5">
+      </div>
+
+      <div class="control-group">
+        <label>Decay Fast (s) <span class="value" id="decayFastValue">0.10</span></label>
+        <input type="range" id="decayFast" min="0.05" max="0.5" step="0.05" value="0.1">
+      </div>
+
+      <div class="control-group">
+        <label>Decay Slow (s) <span class="value" id="decaySlowValue">0.30</span></label>
+        <input type="range" id="decaySlow" min="0.1" max="1.0" step="0.05" value="0.3">
+      </div>
+
+      <div class="control-group">
+        <label>Start Threshold <span class="value" id="thresholdValue">1</span></label>
+        <input type="range" id="startThreshold" min="0" max="5" step="1" value="1">
+      </div>
+
+      <h2 style="margin-top: 24px;">Usage</h2>
+      <div class="code-block">
+        <span class="keyword">import</span> { Terminal } <span class="keyword">from</span> <span class="string">'@xterm/xterm'</span>;<br>
+        <span class="keyword">import</span> { CursorTrailAddon } <span class="keyword">from</span> <span class="string">'@xterm/addon-cursor-trail'</span>;<br><br>
+        <span class="keyword">const</span> term = <span class="keyword">new</span> <span class="function">Terminal</span>();<br>
+        term.<span class="function">open</span>(document.<span class="function">getElementById</span>(<span class="string">'terminal'</span>));<br><br>
+        <span class="keyword">const</span> trail = <span class="keyword">new</span> <span class="function">CursorTrailAddon</span>({<br>
+        &nbsp;&nbsp;trailColor: <span class="string" id="codeColor">'#cccccc'</span>,<br>
+        &nbsp;&nbsp;trailOpacity: <span class="number" id="codeOpacity">0.5</span>,<br>
+        &nbsp;&nbsp;decayFast: <span class="number" id="codeDecayFast">0.1</span>,<br>
+        &nbsp;&nbsp;decaySlow: <span class="number" id="codeDecaySlow">0.3</span>,<br>
+        &nbsp;&nbsp;startThreshold: <span class="number" id="codeThreshold">1</span><br>
+        });<br>
+        term.<span class="function">loadAddon</span>(trail);
+      </div>
+
+      <div class="status">
+        <span class="dot"></span>
+        <span>Trail active — move cursor to see effect</span>
+      </div>
+
+      <div class="info-box">
+        <strong>Tip:</strong> Move the cursor quickly to see the four-corner elastic chase effect. Leading corners chase fast, trailing corners lag behind.
+      </div>
+    </div>
+  </div>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "@xterm/xterm": "/lib/xterm.mjs",
+        "@xterm/addon-cursor-trail": "/addons/addon-cursor-trail/lib/addon-cursor-trail.mjs"
+      }
+    }
+  </script>
+
+  <script type="module">
+    import { Terminal } from '@xterm/xterm';
+    import { CursorTrailAddon } from '@xterm/addon-cursor-trail';
+
+    const term = new Terminal({
+      cursorBlink: true,
+      fontSize: 14,
+      fontFamily: '"Fira Code", "Cascadia Code", "JetBrains Mono", monospace',
+      theme: {
+        background: '#000000',
+        foreground: '#e0e0e0',
+        cursor: '#ffffff',
+        cursorAccent: '#000000',
+        selectionBackground: '#5DA5D533',
+        selectionInactiveBackground: '#555555AA'
+      }
+    });
+
+    term.open(document.getElementById('terminal'));
+
+    // Connect to the demo server's WebSocket
+    const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
+    const socket = new WebSocket(`${protocol}://${location.host}/terminals/1`);
+    const attachAddon = new (await import('@xterm/addon-attach')).AttachAddon();
+    term.loadAddon(attachAddon);
+    attachAddon.activate(term, { socket });
+
+    const trail = new CursorTrailAddon({
+      trailColor: '#cccccc',
+      trailOpacity: 0.5,
+      decayFast: 0.1,
+      decaySlow: 0.3,
+      startThreshold: 1
+    });
+    term.loadAddon(trail);
+
+    // Controls
+    const controls = {
+      enabled: document.getElementById('enabled'),
+      trailColor: document.getElementById('trailColor'),
+      trailOpacity: document.getElementById('trailOpacity'),
+      decayFast: document.getElementById('decayFast'),
+      decaySlow: document.getElementById('decaySlow'),
+      startThreshold: document.getElementById('startThreshold')
+    };
+
+    const valueDisplays = {
+      trailColor: document.getElementById('colorValue'),
+      trailOpacity: document.getElementById('opacityValue'),
+      decayFast: document.getElementById('decayFastValue'),
+      decaySlow: document.getElementById('decaySlowValue'),
+      startThreshold: document.getElementById('thresholdValue')
+    };
+
+    const codeDisplays = {
+      trailColor: document.getElementById('codeColor'),
+      trailOpacity: document.getElementById('codeOpacity'),
+      decayFast: document.getElementById('codeDecayFast'),
+      decaySlow: document.getElementById('codeDecaySlow'),
+      startThreshold: document.getElementById('codeThreshold')
+    };
+
+    function updateTrail() {
+      trail.enabled = controls.enabled.checked;
+      (trail as any)._options.trailColor = controls.trailColor.value;
+      (trail as any)._options.trailOpacity = parseFloat(controls.trailOpacity.value);
+      (trail as any)._options.decayFast = parseFloat(controls.decayFast.value);
+      (trail as any)._options.decaySlow = parseFloat(controls.decaySlow.value);
+      (trail as any)._options.startThreshold = parseFloat(controls.startThreshold.value);
+
+      valueDisplays.trailColor.textContent = controls.trailColor.value;
+      valueDisplays.trailOpacity.textContent = controls.trailOpacity.value;
+      valueDisplays.decayFast.textContent = parseFloat(controls.decayFast.value).toFixed(2);
+      valueDisplays.decaySlow.textContent = parseFloat(controls.decaySlow.value).toFixed(2);
+      valueDisplays.startThreshold.textContent = controls.startThreshold.value;
+
+      codeDisplays.trailColor.textContent = `'${controls.trailColor.value}'`;
+      codeDisplays.trailOpacity.textContent = parseFloat(controls.trailOpacity.value);
+      codeDisplays.decayFast.textContent = parseFloat(controls.decayFast.value);
+      codeDisplays.decaySlow.textContent = parseFloat(controls.decaySlow.value);
+      codeDisplays.startThreshold.textContent = controls.startThreshold.value;
+    }
+
+    Object.values(controls).forEach(el => {
+      el.addEventListener('input', updateTrail);
+      el.addEventListener('change', updateTrail);
+    });
+  </script>
+</body>
+</html>

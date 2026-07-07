@@ -146,6 +146,7 @@ if (config.addon) {
       "@xterm/addon-webgl": "./addons/addon-webgl/lib/addon-webgl.mjs",
       "@xterm/addon-unicode11": "./addons/addon-unicode11/lib/addon-unicode11.mjs",
       "@xterm/addon-unicode-graphemes": "./addons/addon-unicode-graphemes/lib/addon-unicode-graphemes.mjs",
+      "@xterm/addon-cursor-trail": "./addons/addon-cursor-trail/lib/addon-cursor-trail.mjs",
 
       // Non-bundled ESM imports
       // HACK: Ligatures imports fs which in the esbuild bundle resolves at runtime _on startup_

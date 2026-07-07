@@ -49,6 +49,12 @@ function startServer(): void {
 
   app.use('/dist', express.static(demoRoot + '/dist'));
   app.use('/src', express.static(demoRoot + '/src'));
+  app.use('/lib', express.static(path.join(__dirname, '..', '..', 'lib')));
+  app.use('/addons', express.static(path.join(__dirname, '..', '..', 'addons')));
+
+  app.get('/cursor-trail', (req, res) => {
+    res.sendFile(demoRoot + '/cursor-trail.html');
+  });
 
   app.post('/terminals', (req, res) => {
     const env: { [key: string]: string } = {};
