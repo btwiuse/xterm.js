@@ -51,6 +51,46 @@ export class CursorTrailAddon extends Disposable implements ITerminalAddon, ICur
     }
   }
 
+  public get trailColor(): string {
+    return this._options.trailColor;
+  }
+
+  public set trailColor(value: string) {
+    this._options.trailColor = value;
+  }
+
+  public get trailOpacity(): number {
+    return this._options.trailOpacity;
+  }
+
+  public set trailOpacity(value: number) {
+    this._options.trailOpacity = Math.max(0, Math.min(1, value));
+  }
+
+  public get decayFast(): number {
+    return this._options.decayFast;
+  }
+
+  public set decayFast(value: number) {
+    this._options.decayFast = Math.max(0.001, value);
+  }
+
+  public get decaySlow(): number {
+    return this._options.decaySlow;
+  }
+
+  public set decaySlow(value: number) {
+    this._options.decaySlow = Math.max(0.001, value);
+  }
+
+  public get startThreshold(): number {
+    return this._options.startThreshold;
+  }
+
+  public set startThreshold(value: number) {
+    this._options.startThreshold = Math.max(0, value);
+  }
+
   public activate(terminal: Terminal): void {
     this._terminal = terminal;
     this._renderer = new CursorTrailRenderer(terminal);

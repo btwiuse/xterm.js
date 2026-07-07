@@ -23,6 +23,11 @@ declare module '@xterm/addon-cursor-trail' {
    */
   export interface ICursorTrailAddonApi {
     readonly enabled: boolean;
+    trailColor: string;
+    trailOpacity: number;
+    decayFast: number;
+    decaySlow: number;
+    startThreshold: number;
   }
 
   /**
@@ -34,5 +39,15 @@ declare module '@xterm/addon-cursor-trail' {
     dispose(): void;
     get enabled(): boolean;
     set enabled(value: boolean);
+    get trailColor(): string;
+    set trailColor(value: string);
+    get trailOpacity(): number;
+    set trailOpacity(value: number);
+    get decayFast(): number;
+    set decayFast(value: number);
+    get decaySlow(): number;
+    set decaySlow(value: number);
+    get startThreshold(): number;
+    set startThreshold(value: number);
   }
 }

@@ -388,12 +388,20 @@
 
     term.open(document.getElementById('terminal'));
 
-    // Connect to the demo server's WebSocket
+    // Create a shell session first, then connect WebSocket to it
     const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-    const socket = new WebSocket(`${protocol}://${location.host}/terminals/1`);
-    const attachAddon = new (await import('@xterm/addon-attach')).AttachAddon();
-    term.loadAddon(attachAddon);
-    attachAddon.activate(term, { socket });
+    const cols = term.cols;
+    const rows = term.rows;
+    const termResp = await fetch(`/terminals?cols=${cols}&rows=${rows}`, { method: 'POST' });
+    const pid = await termResp.text();
+    const socket = new WebSocket(`${protocol}://${location.host}/terminals/${pid}`);
+    socket.binaryType = 'arraybuffer';
+    socket.addEventListener('message', (ev) => {
+      const data = ev.data;
+      term.write(typeof data === 'string' ? data : new Uint8Array(data));
+    });
+    term.onData((data) => socket.send(data));
+    term.onBinary((data) => socket.send(data));
 
     const trail = new CursorTrailAddon({
       trailColor: '#cccccc',
@@ -432,11 +440,11 @@
 
     function updateTrail() {
       trail.enabled = controls.enabled.checked;
-      (trail as any)._options.trailColor = controls.trailColor.value;
-      (trail as any)._options.trailOpacity = parseFloat(controls.trailOpacity.value);
-      (trail as any)._options.decayFast = parseFloat(controls.decayFast.value);
-      (trail as any)._options.decaySlow = parseFloat(controls.decaySlow.value);
-      (trail as any)._options.startThreshold = parseFloat(controls.startThreshold.value);
+      trail.trailColor = controls.trailColor.value;
+      trail.trailOpacity = parseFloat(controls.trailOpacity.value);
+      trail.decayFast = parseFloat(controls.decayFast.value);
+      trail.decaySlow = parseFloat(controls.decaySlow.value);
+      trail.startThreshold = parseFloat(controls.startThreshold.value);
 
       valueDisplays.trailColor.textContent = controls.trailColor.value;
       valueDisplays.trailOpacity.textContent = controls.trailOpacity.value;
