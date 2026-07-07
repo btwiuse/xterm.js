@@ -396,7 +396,7 @@
     term.open(document.getElementById('terminal'));
     term.focus();
 
-    function syncTerminalSize(): void {
+    function syncTerminalSize() {
       const dims = term.dimensions;
       if (!dims || dims.css.cell.width <= 0 || dims.css.cell.height <= 0) { return; }
       const el = document.getElementById('terminal');
@@ -429,7 +429,7 @@
     // Resize terminal when its wrapper size changes (e.g. window resize)
     const terminalWrapper = document.querySelector('.terminal-wrapper');
     if (terminalWrapper) {
-      let rafId: number | undefined;
+      let rafId;
       const ro = new ResizeObserver(() => {
         if (rafId !== undefined) { return; }
         rafId = requestAnimationFrame(() => {
@@ -441,7 +441,7 @@
     }
 
     // Notify backend of terminal size changes (needed for PTY to resize)
-    let backendRafId: number | undefined;
+    let backendRafId;
     term.onResize((size) => {
       if (backendRafId !== undefined) { return; }
       backendRafId = requestAnimationFrame(() => {
