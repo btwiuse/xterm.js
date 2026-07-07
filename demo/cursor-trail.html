@@ -408,6 +408,13 @@
       term.resize();
     });
 
+    // Notify backend of terminal size changes (needed for PTY to resize)
+    term.onResize((size) => {
+      const pixelWidth = Math.round(term.dimensions?.css?.canvas?.width ?? 0);
+      const pixelHeight = Math.round(term.dimensions?.css?.canvas?.height ?? 0);
+      fetch(`/terminals/${pid}/size?cols=${size.cols}&rows=${size.rows}&pixelWidth=${pixelWidth}&pixelHeight=${pixelHeight}`, { method: 'POST' });
+    });
+
     const trail = new CursorTrailAddon({
       trailColor: '#cccccc',
       trailOpacity: 0.5,
