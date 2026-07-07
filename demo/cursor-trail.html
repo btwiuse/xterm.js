@@ -403,6 +403,11 @@
     term.onData((data) => socket.send(data));
     term.onBinary((data) => socket.send(data));
 
+    // Resize terminal when window resizes
+    window.addEventListener('resize', () => {
+      term.resize();
+    });
+
     const trail = new CursorTrailAddon({
       trailColor: '#cccccc',
       trailOpacity: 0.5,
