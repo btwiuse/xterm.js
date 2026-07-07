@@ -1,6 +1,6 @@
 # CursorTrail Addon Demo
 
-This demo showcases the `@xterm/addon-cursor-trail` plugin — a kitty-inspired cursor trail effect for xterm.js.
+This demo showcases the `xterm-addon-cursor-trail` plugin — a kitty-inspired cursor trail effect for xterm.js.
 
 ## What it does
 
@@ -47,12 +47,12 @@ The demo has two parts:
 ## Using the addon in your project
 
 ```bash
-bun add @xterm/addon-cursor-trail
+bun add xterm-addon-cursor-trail
 ```
 
 ```typescript
 import { Terminal } from '@xterm/xterm';
-import { CursorTrailAddon } from '@xterm/addon-cursor-trail';
+import { CursorTrailAddon } from 'xterm-addon-cursor-trail';
 
 const term = new Terminal();
 term.open(document.getElementById('terminal')!);

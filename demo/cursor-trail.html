@@ -335,7 +335,7 @@
       <h2 style="margin-top: 24px;">Usage</h2>
       <div class="code-block">
         <span class="keyword">import</span> { Terminal } <span class="keyword">from</span> <span class="string">'@xterm/xterm'</span>;<br>
-        <span class="keyword">import</span> { CursorTrailAddon } <span class="keyword">from</span> <span class="string">'@xterm/addon-cursor-trail'</span>;<br><br>
+        <span class="keyword">import</span> { CursorTrailAddon } <span class="keyword">from</span> <span class="string">'xterm-addon-cursor-trail'</span>;<br><br>
         <span class="keyword">const</span> term = <span class="keyword">new</span> <span class="function">Terminal</span>();<br>
         term.<span class="function">open</span>(document.<span class="function">getElementById</span>(<span class="string">'terminal'</span>));<br><br>
         <span class="keyword">const</span> trail = <span class="keyword">new</span> <span class="function">CursorTrailAddon</span>({<br>
@@ -363,14 +363,14 @@
     {
       "imports": {
         "@xterm/xterm": "/lib/xterm.mjs",
-        "@xterm/addon-cursor-trail": "/addons/addon-cursor-trail/lib/addon-cursor-trail.mjs"
+        "xterm-addon-cursor-trail": "/addons/addon-cursor-trail/lib/addon-cursor-trail.mjs"
       }
     }
   </script>
 
   <script type="module">
     import { Terminal } from '@xterm/xterm';
-    import { CursorTrailAddon } from '@xterm/addon-cursor-trail';
+    import { CursorTrailAddon } from 'xterm-addon-cursor-trail';
 
     const term = new Terminal({
       cursorBlink: true,

@@ -56,8 +56,8 @@
       "version": "0.2.0",
     },
     "addons/addon-cursor-trail": {
-      "name": "@xterm/addon-cursor-trail",
-      "version": "0.1.0",
+      "name": "xterm-addon-cursor-trail",
+      "version": "0.0.1",
     },
     "addons/addon-fit": {
       "name": "@xterm/addon-fit",
@@ -454,7 +454,7 @@
 
     "@xterm/addon-clipboard": ["@xterm/addon-clipboard@workspace:addons/addon-clipboard"],
 
-    "@xterm/addon-cursor-trail": ["@xterm/addon-cursor-trail@workspace:addons/addon-cursor-trail"],
+    "xterm-addon-cursor-trail": ["xterm-addon-cursor-trail@workspace:addons/addon-cursor-trail"],
 
     "@xterm/addon-fit": ["@xterm/addon-fit@workspace:addons/addon-fit"],
 

@@ -22,7 +22,7 @@
       "browser/*": [
         "../../../src/browser/*"
       ],
-      "@xterm/addon-cursor-trail": [
+      "xterm-addon-cursor-trail": [
         "../typings/addon-cursor-trail.d.ts"
       ]
     }

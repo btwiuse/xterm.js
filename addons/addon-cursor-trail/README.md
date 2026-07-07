@@ -1,4 +1,4 @@
-# @xterm/addon-cursor-trail
+# xterm-addon-cursor-trail
 
 A kitty-inspired cursor trail addon for xterm.js. When the cursor moves, a
 translucent quad with rounded corners smoothly chases the cursor position,
@@ -18,14 +18,14 @@ fading out behind it.
 ## Installation
 
 ```bash
-bun add @xterm/addon-cursor-trail
+bun add xterm-addon-cursor-trail
 ```
 
 ## Usage
 
 ```typescript
 import { Terminal } from '@xterm/xterm';
-import { CursorTrailAddon } from '@xterm/addon-cursor-trail';
+import { CursorTrailAddon } from 'xterm-addon-cursor-trail';
 
 const terminal = new Terminal();
 terminal.open(document.getElementById('terminal')!);

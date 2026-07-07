@@ -5,7 +5,7 @@
 
 import { Terminal, ITerminalAddon } from '@xterm/xterm';
 
-declare module '@xterm/addon-cursor-trail' {
+declare module 'xterm-addon-cursor-trail' {
   /**
    * Configuration options for the cursor trail addon.
    */
