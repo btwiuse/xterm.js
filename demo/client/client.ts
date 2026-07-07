@@ -41,6 +41,8 @@ import { WebLinksAddon } from '@xterm/addon-web-links';
 import { WebglAddon } from '@xterm/addon-webgl';
 import { Unicode11Addon } from '@xterm/addon-unicode11';
 import { UnicodeGraphemesAddon } from '@xterm/addon-unicode-graphemes';
+import { CursorTrailAddon } from 'xterm-addon-cursor-trail';
+import { AddonCursorTrailWindow } from './components/window/addonCursorTrailWindow';
 import { AddonCollection, type AddonType, type IDemoAddon } from './types';
 
 export interface IWindowWithTerminal extends Window {
@@ -70,6 +72,7 @@ let controlBar: ControlBar;
 let addonsWindow: AddonsWindow;
 let addonSearchWindow: AddonSearchWindow;
 let addonWebglWindow: WebglWindow;
+let addonCursorTrailWindow: AddonCursorTrailWindow;
 let optionsWindow: OptionsWindow;
 
 const addons: AddonCollection = {
@@ -83,6 +86,7 @@ const addons: AddonCollection = {
   webFonts: { name: 'webFonts', ctor: WebFontsAddon, canChange: true },
   webLinks: { name: 'webLinks', ctor: WebLinksAddon, canChange: true },
   webgl: { name: 'webgl', ctor: WebglAddon, canChange: true },
+  cursorTrail: { name: 'cursorTrail', ctor: CursorTrailAddon, canChange: true },
   unicode11: { name: 'unicode11', ctor: Unicode11Addon, canChange: true },
   unicodeGraphemes: { name: 'unicodeGraphemes', ctor: UnicodeGraphemesAddon, canChange: true },
   ligatures: { name: 'ligatures', ctor: LigaturesAddon, canChange: true }
@@ -157,6 +161,7 @@ const disposeRecreateButtonHandler: () => void = () => {
     addons.ligatures.instance = undefined;
     addons.webLinks.instance = undefined;
     addons.webgl.instance = undefined;
+    addons.cursorTrail.instance = undefined;
     document.getElementById('dispose')!.innerHTML = 'Recreate Terminal';
   } else {
     createTerminal();
@@ -224,6 +229,7 @@ if (document.location.pathname === '/test') {
   controlBar.registerWindow(new AddonWebFontsWindow(typedTerm, addons), { afterId: 'addon-serialize', hidden: true, italics: true });
   controlBar.registerWindow(new AddonWebLinksWindow(typedTerm, addons), { afterId: 'addon-web-fonts', hidden: true, italics: true });
   addonWebglWindow = controlBar.registerWindow(new WebglWindow(typedTerm, addons), { afterId: 'addon-web-links', hidden: true, italics: true });
+  addonCursorTrailWindow = controlBar.registerWindow(new AddonCursorTrailWindow(typedTerm, addons), { afterId: 'addon-webgl', hidden: true, italics: true });
   controlBar.registerWindow(new TestWindow(typedTerm, addons, { disposeRecreateButtonHandler, createNewWindowButtonHandler }), { afterId: 'options' });
   actionElements = {
     findNext: addonSearchWindow.findNextInput,
@@ -243,6 +249,7 @@ if (document.location.pathname === '/test') {
   controlBar.setTabVisible('addon-web-fonts', true);
   controlBar.setTabVisible('addon-web-links', !!addons.webLinks.instance);
   controlBar.setTabVisible('addon-webgl', true);
+  controlBar.setTabVisible('addon-cursor-trail', true);
   addonWebglWindow.setTextureAtlas(addons.webgl.instance!.textureAtlas!);
   addons.webgl.instance!.onChangeTextureAtlas(e => addonWebglWindow.setTextureAtlas(e));
   addons.webgl.instance!.onAddTextureAtlasCanvas(e => addonWebglWindow.appendTextureAtlas(e));
@@ -300,6 +307,7 @@ function createTerminal(): Terminal {
   addons.search.instance = new SearchAddon();
   addons.serialize.instance = new SerializeAddon();
   addons.fit.instance = new FitAddon();
+  addons.cursorTrail.instance = new CursorTrailAddon();
   addons.image.instance = new ImageAddon!();
   addons.progress.instance = new ProgressAddon();
   addons.unicodeGraphemes.instance = new UnicodeGraphemesAddon();

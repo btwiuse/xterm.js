@@ -50,6 +50,9 @@
       "@xterm/addon-ligatures": [
         "../../addons/addon-ligatures"
       ],
+      "xterm-addon-cursor-trail": [
+        "../../addons/addon-cursor-trail"
+      ],
       "*": ["./*"]
     }
   },
