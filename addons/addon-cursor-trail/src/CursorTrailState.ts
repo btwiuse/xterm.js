@@ -7,26 +7,34 @@ import type { ICursorEdges } from './types';
 
 /**
  * CursorTrailState manages the four corner positions and opacity for the
- * cursor trail animation, faithfully implementing kitty's four-corner
- * exponential decay algorithm.
+ * cursor trail animation, implementing kitty's four-corner exponential
+ * decay algorithm.
+ *
+ * The trail uses four corners that chase the cursor. Each corner's decay
+ * speed is dynamically modulated: corners whose movement aligns with their
+ * position relative to the cursor center chase faster (leading corners),
+ * while corners moving against their position lag behind (trailing corners).
+ * This creates an elastic "stretch" effect.
  */
 export class CursorTrailState {
   // Four corners chasing the cursor: 0=TL, 1=TR, 2=BR, 3=BL
   private readonly _cornerX = new Float64Array(4);
   private readonly _cornerY = new Float64Array(4);
 
-  // Previous cursor center, used to compute movement direction
-  private _prevCenterX = 0;
-  private _prevCenterY = 0;
-
   // Current trail opacity
   private _opacity = 0;
 
-  // Whether the trail needs to be rendered this frame
+  // Whether the trail needs to be rendered this frame (with hysteresis,
+  // keeping rendering one extra frame after corners settle to avoid flicker)
   private _needsRender = false;
 
   // Whether this is the first update frame
   private _isFirstFrame = true;
+
+  // Whether the trail was active in the previous frame (non-hysteresis).
+  // Used for start threshold guard: once the trail starts, threshold no
+  // longer applies until it fully settles.
+  private _wasActive = false;
 
   /**
    * The current corner positions.
@@ -71,7 +79,7 @@ export class CursorTrailState {
     isCursorVisible: boolean,
     maxOpacity: number
   ): void {
-    // Target cursor corners
+    // Target cursor corners: [TL, TR, BR, BL]
     const targetX = [cursorEdges.left, cursorEdges.right, cursorEdges.right, cursorEdges.left];
     const targetY = [cursorEdges.top, cursorEdges.top, cursorEdges.bottom, cursorEdges.bottom];
 
@@ -84,45 +92,85 @@ export class CursorTrailState {
         this._cornerX[i] = targetX[i];
         this._cornerY[i] = targetY[i];
       }
-      this._prevCenterX = centerX;
-      this._prevCenterY = centerY;
       this._opacity = isCursorVisible ? maxOpacity : 0;
       this._isFirstFrame = false;
       this._needsRender = false;
+      this._wasActive = false;
       return;
     }
 
-    // Movement direction and distance
-    const moveDx = centerX - this._prevCenterX;
-    const moveDy = centerY - this._prevCenterY;
-    const moveDist = Math.sqrt(moveDx * moveDx + moveDy * moveDy);
-
-    // Start threshold: snap corners to cursor if movement is too small
-    if (moveDist < startThreshold * cellWidth) {
-      for (let i = 0; i < 4; i++) {
-        this._cornerX[i] = targetX[i];
-        this._cornerY[i] = targetY[i];
+    // Start threshold (kitty's should_skip_cursor_trail_update):
+    // Only applies when the trail hasn't started yet (!_wasActive).
+    // Checks corner[0] (TL in xterm order) distance to its target in cell units.
+    if (!this._wasActive && startThreshold > 0) {
+      const cellDx = Math.round(Math.abs(this._cornerX[0] - targetX[0]) / cellWidth);
+      const cellDy = Math.round(Math.abs(this._cornerY[0] - targetY[0]) / cellWidth);
+      if (cellDx + cellDy <= startThreshold) {
+        for (let i = 0; i < 4; i++) {
+          this._cornerX[i] = targetX[i];
+          this._cornerY[i] = targetY[i];
+        }
+        this._needsRender = false;
+        this._wasActive = false;
+        this._updateOpacity(dt, isCursorVisible, maxOpacity);
+        return;
       }
-      this._prevCenterX = centerX;
-      this._prevCenterY = centerY;
-      this._needsRender = false;
-      this._updateOpacity(dt, isCursorVisible, maxOpacity);
-      return;
     }
 
-    // Normalized movement direction
-    const normMoveDx = moveDx / moveDist;
-    const normMoveDy = moveDy / moveDist;
+    // Cursor diagonal half, used to normalize kitty-style dot product
+    const cursorDiag2 = Math.sqrt(
+      (cursorEdges.right - cursorEdges.left) ** 2 +
+      (cursorEdges.bottom - cursorEdges.top) ** 2
+    ) / 2;
 
-    let allClose = true;
-    const snapDist = 0.5;
+    // Compute dx, dy, and kitty-style dot for each corner
+    const dx: number[] = [0, 0, 0, 0];
+    const dy: number[] = [0, 0, 0, 0];
+    const dot: number[] = [0, 0, 0, 0];
 
     for (let i = 0; i < 4; i++) {
-      const dx = targetX[i] - this._cornerX[i];
-      const dy = targetY[i] - this._cornerY[i];
-      const dist = Math.sqrt(dx * dx + dy * dy);
+      dx[i] = targetX[i] - this._cornerX[i];
+      dy[i] = targetY[i] - this._cornerY[i];
+      const dist = Math.sqrt(dx[i] * dx[i] + dy[i] * dy[i]);
 
-      if (dist < snapDist) {
+      if (dist < 1e-6) {
+        dx[i] = 0;
+        dy[i] = 0;
+        dot[i] = 0;
+      } else {
+        // Kitty-style dot product:
+        //   (corner→target) · (center→target_corner) / cursor_diag_2 / |corner→target|
+        // This measures how aligned each corner's movement is with its position
+        // relative to the cursor center. Leading corners (ahead of movement) get
+        // positive dot → fast decay. Trailing corners get negative dot → slow decay.
+        dot[i] = (
+          dx[i] * (targetX[i] - centerX) +
+          dy[i] * (targetY[i] - centerY)
+        ) / (cursorDiag2 * dist);
+      }
+    }
+
+    // Find min/max dot across all corners (kitty cross-corner normalization)
+    let minDot = Infinity;
+    let maxDot = -Infinity;
+    for (let i = 0; i < 4; i++) {
+      if (dx[i] !== 0 || dy[i] !== 0) {
+        minDot = Math.min(minDot, dot[i]);
+        maxDot = Math.max(maxDot, dot[i]);
+      }
+    }
+
+    // Apply decay per corner
+    let allClose = true;
+    const snapPx = 0.5;
+
+    for (let i = 0; i < 4; i++) {
+      if (dx[i] === 0 && dy[i] === 0) {
+        continue;
+      }
+
+      const dist = Math.sqrt(dx[i] * dx[i] + dy[i] * dy[i]);
+      if (dist < snapPx) {
         this._cornerX[i] = targetX[i];
         this._cornerY[i] = targetY[i];
         continue;
@@ -130,29 +178,26 @@ export class CursorTrailState {
 
       allClose = false;
 
-      // Direction from corner to target (normalized)
-      const ndx = dx / dist;
-      const ndy = dy / dist;
+      // Kitty-style decay: normalize dot relative to spread across all corners.
+      // corner with max_dot → fastest decay (decay_fast)
+      // corner with min_dot → slowest decay (decay_slow)
+      let decay: number;
+      if (minDot === maxDot) {
+        decay = decaySlow;
+      } else {
+        decay = decaySlow + (decayFast - decaySlow) * (dot[i] - minDot) / (maxDot - minDot);
+      }
 
-      // Dot product with movement direction
-      // dot > 0: corner is in the direction of movement → fast decay
-      // dot < 0: corner is against the movement → slow decay
-      const dot = normMoveDx * ndx + normMoveDy * ndy;
-
-      // Map dot from [-1, 1] to [0, 1]
-      const t = (dot + 1) / 2;
-      const decay = decaySlow + (decayFast - decaySlow) * t;
-
-      // Exponential ease-out step
       const step = 1.0 - Math.pow(2, -10.0 * dt / decay);
-
-      this._cornerX[i] += dx * step;
-      this._cornerY[i] += dy * step;
+      this._cornerX[i] += dx[i] * step;
+      this._cornerY[i] += dy[i] * step;
     }
 
-    this._needsRender = !allClose;
-    this._prevCenterX = centerX;
-    this._prevCenterY = centerY;
+    // Kitty-style needs_render hysteresis: keep rendering for one extra frame
+    // after corners settle to prevent flickering at the threshold boundary
+    this._needsRender = !allClose || this._wasActive;
+    this._wasActive = !allClose;
+
     this._updateOpacity(dt, isCursorVisible, maxOpacity);
   }
 
