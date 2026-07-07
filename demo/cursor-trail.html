@@ -410,7 +410,8 @@
       if (!dims || dims.css.cell.width <= 0 || dims.css.cell.height <= 0) {
         return;
       }
-      const el = document.getElementById('terminal')!;
+      const el = document.getElementById('terminal');
+      if (!el) { return; }
       const cols = Math.floor(el.clientWidth / dims.css.cell.width);
       const rows = Math.floor(el.clientHeight / dims.css.cell.height);
       if (cols > 0 && rows > 0) {
