@@ -396,6 +396,21 @@
     term.open(document.getElementById('terminal'));
     term.focus();
 
+    function syncTerminalSize(): void {
+      const dims = term.dimensions;
+      if (!dims || dims.css.cell.width <= 0 || dims.css.cell.height <= 0) { return; }
+      const el = document.getElementById('terminal');
+      if (!el) { return; }
+      const cols = Math.floor(el.clientWidth / dims.css.cell.width);
+      const rows = Math.floor(el.clientHeight / dims.css.cell.height);
+      if (cols > 0 && rows > 0 && (cols !== term.cols || rows !== term.rows)) {
+        term.resize(cols, rows);
+      }
+    }
+
+    // Sync size immediately after open
+    syncTerminalSize();
+
     // Create a shell session first, then connect WebSocket to it
     const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
     const cols = term.cols;
@@ -419,13 +434,7 @@
         if (rafId !== undefined) { return; }
         rafId = requestAnimationFrame(() => {
           rafId = undefined;
-          const dims = term.dimensions;
-          if (!dims || dims.css.cell.width <= 0 || dims.css.cell.height <= 0) { return; }
-          const cols = Math.floor(terminalWrapper.clientWidth / dims.css.cell.width);
-          const rows = Math.floor(terminalWrapper.clientHeight / dims.css.cell.height);
-          if (cols > 0 && rows > 0 && (cols !== term.cols || rows !== term.rows)) {
-            term.resize(cols, rows);
-          }
+          syncTerminalSize();
         });
       });
       ro.observe(terminalWrapper);
