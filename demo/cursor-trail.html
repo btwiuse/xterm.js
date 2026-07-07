@@ -414,23 +414,33 @@
     // Resize terminal when its wrapper size changes (e.g. window resize)
     const terminalWrapper = document.querySelector('.terminal-wrapper');
     if (terminalWrapper) {
+      let rafId: number | undefined;
       const ro = new ResizeObserver(() => {
-        const dims = term.dimensions;
-        if (!dims || dims.css.cell.width <= 0 || dims.css.cell.height <= 0) { return; }
-        const cols = Math.floor(terminalWrapper.clientWidth / dims.css.cell.width);
-        const rows = Math.floor(terminalWrapper.clientHeight / dims.css.cell.height);
-        if (cols > 0 && rows > 0 && (cols !== term.cols || rows !== term.rows)) {
-          term.resize(cols, rows);
-        }
+        if (rafId !== undefined) { return; }
+        rafId = requestAnimationFrame(() => {
+          rafId = undefined;
+          const dims = term.dimensions;
+          if (!dims || dims.css.cell.width <= 0 || dims.css.cell.height <= 0) { return; }
+          const cols = Math.floor(terminalWrapper.clientWidth / dims.css.cell.width);
+          const rows = Math.floor(terminalWrapper.clientHeight / dims.css.cell.height);
+          if (cols > 0 && rows > 0 && (cols !== term.cols || rows !== term.rows)) {
+            term.resize(cols, rows);
+          }
+        });
       });
       ro.observe(terminalWrapper);
     }
 
     // Notify backend of terminal size changes (needed for PTY to resize)
+    let backendRafId: number | undefined;
     term.onResize((size) => {
-      const pixelWidth = Math.round(term.dimensions?.css?.canvas?.width ?? 0);
-      const pixelHeight = Math.round(term.dimensions?.css?.canvas?.height ?? 0);
-      fetch(`/terminals/${pid}/size?cols=${size.cols}&rows=${size.rows}&pixelWidth=${pixelWidth}&pixelHeight=${pixelHeight}`, { method: 'POST' });
+      if (backendRafId !== undefined) { return; }
+      backendRafId = requestAnimationFrame(() => {
+        backendRafId = undefined;
+        const pixelWidth = Math.round(term.dimensions?.css?.canvas?.width ?? 0);
+        const pixelHeight = Math.round(term.dimensions?.css?.canvas?.height ?? 0);
+        fetch(`/terminals/${pid}/size?cols=${size.cols}&rows=${size.rows}&pixelWidth=${pixelWidth}&pixelHeight=${pixelHeight}`, { method: 'POST' });
+      });
     });
 
     const trail = new CursorTrailAddon({
