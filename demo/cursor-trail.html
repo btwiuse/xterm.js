@@ -16,8 +16,10 @@
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: #1e1e1e;
       color: #e0e0e0;
-      min-height: 100vh;
-      overflow-x: hidden;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
     }
 
     .header {
@@ -50,6 +52,9 @@
       gap: 24px;
       padding: 24px;
       max-width: 1400px;
+      width: 100%;
+      flex: 1;
+      min-height: 0;
       margin: 0 auto;
     }
 
@@ -65,6 +70,8 @@
       padding: 12px;
       border: 1px solid #404040;
       position: relative;
+      min-height: 0;
+      display: flex;
     }
 
     .terminal-wrapper .label {
@@ -81,7 +88,7 @@
 
     #terminal {
       width: 100%;
-      height: 500px;
+      height: 100%;
       border-radius: 4px;
     }
 
@@ -404,20 +411,20 @@
     term.onData((data) => socket.send(data));
     term.onBinary((data) => socket.send(data));
 
-    // Resize terminal when window resizes
-    window.addEventListener('resize', () => {
-      const dims = term.dimensions;
-      if (!dims || dims.css.cell.width <= 0 || dims.css.cell.height <= 0) {
-        return;
-      }
-      const el = document.getElementById('terminal');
-      if (!el) { return; }
-      const cols = Math.floor(el.clientWidth / dims.css.cell.width);
-      const rows = Math.floor(el.clientHeight / dims.css.cell.height);
-      if (cols > 0 && rows > 0) {
-        term.resize(cols, rows);
-      }
-    });
+    // Resize terminal when its wrapper size changes (e.g. window resize)
+    const terminalWrapper = document.querySelector('.terminal-wrapper');
+    if (terminalWrapper) {
+      const ro = new ResizeObserver(() => {
+        const dims = term.dimensions;
+        if (!dims || dims.css.cell.width <= 0 || dims.css.cell.height <= 0) { return; }
+        const cols = Math.floor(terminalWrapper.clientWidth / dims.css.cell.width);
+        const rows = Math.floor(terminalWrapper.clientHeight / dims.css.cell.height);
+        if (cols > 0 && rows > 0 && (cols !== term.cols || rows !== term.rows)) {
+          term.resize(cols, rows);
+        }
+      });
+      ro.observe(terminalWrapper);
+    }
 
     // Notify backend of terminal size changes (needed for PTY to resize)
     term.onResize((size) => {
